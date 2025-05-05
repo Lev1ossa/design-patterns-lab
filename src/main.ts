@@ -14,17 +14,14 @@ async function main() {
   lines.forEach((data, index) => {
     try {
       const values = data.map(Number);
-      const valuesStr = data.join(', ');
 
       if (values.some(Number.isNaN)) {
-        logger.warn({ values: valuesStr, line: index + 1 }, 'Non-numeric values');
-        return;
+        throw new InvalidShapeDataError(`Non-numeric values at line ${index + 1}`);
       }
 
       const type = ShapeValidator.detectShapeType(values);
       if (!type) {
-        logger.warn({ values: valuesStr, line: index + 1 }, 'Unknown shape type');
-        return;
+        throw new InvalidShapeDataError(`Unknown shape type at line ${index + 1}`);
       }
 
       const isValid =
@@ -32,15 +29,13 @@ async function main() {
         (type === 'cone' && ShapeValidator.validateCone(values));
 
       if (!isValid) {
-        logger.warn({ values: valuesStr, line: index + 1 }, `Invalid ${type}`);
-        return;
+        throw new InvalidShapeDataError(`Invalid ${type} at line ${index + 1}`);
       }
 
       const name = `${type} №${index + 1}`;
       const shape = shapeFactory.createShape(values, name);
       if (!shape) {
-        logger.warn({ values: valuesStr, line: index + 1 }, 'Failed to create shape');
-        return;
+        throw new InvalidShapeDataError(`Failed to create shape at line ${index + 1}`);
       }
 
       GeometryService.printShapeInfo(shape);
