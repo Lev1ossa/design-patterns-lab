@@ -4,10 +4,12 @@ import { GeometryService } from './services/GeometryService';
 import { logger } from './logger/logger';
 import { InvalidShapeDataError } from './exceptions/InvalidShapeDataError';
 import { ShapeValidator } from './validators/ShapeValidator';
+import { ShapeRepository } from './repository/ShapeRepository';
 
 async function main() {
   const filePath = './data/figures.txt';
   const shapeFactory = new ShapeFactory();
+  const repository = new ShapeRepository();
 
   const lines = await readShapeData(filePath);
 
@@ -32,24 +34,33 @@ async function main() {
         throw new InvalidShapeDataError(`Invalid ${type} at line ${index + 1}`);
       }
 
-      const name = `${type} №${index + 1}`;
-      const shape = shapeFactory.createShape(values, name);
+      const shape = shapeFactory.createShape(values, `${type}_${index + 1}`);
       if (!shape) {
         throw new InvalidShapeDataError(`Failed to create shape at line ${index + 1}`);
       }
 
-      GeometryService.printShapeInfo(shape);
+      repository.add(shape);
       logger.info(`Shape "${shape.name}" created and validated successfully.`);
     } catch (err) {
-      const valuesStr = data.join(', ');
-      const msg = `Unexpected error at line ${index + 1}`;
       if (err instanceof InvalidShapeDataError) {
-        logger.warn({ values: valuesStr, line: index + 1 }, err.message);
+        logger.warn(err.message, { values: lines[index], line: index + 1 });
       } else {
-        logger.error({ values: valuesStr, line: index + 1, err }, msg);
+        logger.error(`Unexpected error at line ${index + 1}:`, err);
       }
     }
   });
+
+  console.log('\nAll Shapes:');
+  repository.getAll().forEach(GeometryService.printShapeInfo);
+
+  console.log('\nSorted by Name:');
+  repository.sortByName().forEach(GeometryService.printShapeInfo);
+
+  console.log('\nShapes with area ≈ 6:');
+  repository.findByArea(6).forEach(GeometryService.printShapeInfo);
+
+  console.log('\nShapes near origin (distance ≈ 5):');
+  repository.findByDistanceFromOrigin(5).forEach(GeometryService.printShapeInfo);
 }
 
 main();

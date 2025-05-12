@@ -25,6 +25,7 @@ module.exports = {
     'no-useless-constructor': 'off',
     'no-empty-function': ['error', { allow: ['constructors'] }],
     "curly": ["error", "all"],
+    "no-underscore-dangle": 'off'
   },
   settings: {
     'import/resolver': {
